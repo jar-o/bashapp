@@ -1,0 +1,29 @@
+
+Overview
+
+bashapp takes as input a bash script and generates a binary executable and OS X
+application directory structure. This allows developers to provide Finder clickable
+bash scripts without terminals popping up, etc. Useful for launch, service scripts,
+etc.
+
+It also provides simple source encryption as a means to obfuscate the bash script.
+
+
+Compiling
+
+Type the following command in the Terminal to compile
+
+gcc bashapp.c -o bashapp
+
+
+Using bashapp
+
+Usage: bashapp PATH_TO_BASH_SCRIPT APPNAME [KEY]
+
+E.g.
+
+  Create 'MyApp' with the default encryption key:
+  bashapp script.sh MyApp
+
+  Create 'MyApp' with your own key:
+  bashapp script.sh MyApp s#ZcrE33t

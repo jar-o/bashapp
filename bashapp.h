@@ -23,12 +23,6 @@ SOFTWARE.
 */
 
 
-/*
-
-Compile from the Terminal with:   gcc bashapp.c -o bashapp
-
-*/
-
 #ifndef BASHAPP_HEADER_INCLUDED
 #define BASHAPP_HEADER_INCLUDED
 
