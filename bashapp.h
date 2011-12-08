@@ -81,9 +81,8 @@ int main() {\n\
         close(fd[0]);\n\
         write(fd[1], src, SCR_SIZE);\n\
     }\n\
-    return EXIT_SUCCESS;\n\
     free(src); src = NULL;\n\
-    return 0;\n\
+    return EXIT_SUCCESS;\n\
 }\n"
 
 #define MAKE_APP "#!/bin/bash\n\
