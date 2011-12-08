@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 
-
 #include "bashapp.h"
 
 int main(int argc, char *argv[]) {
