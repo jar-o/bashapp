@@ -45,6 +45,7 @@ E.g.\n\n\
 
 #define C_TEMPLATE "#include <stdio.h>\n\
 #include <stdlib.h>\n\
+#include <unistd.h>\n\
 #include <string.h>\n\
 #define SCR_SIZE ___BASH_SCR_SIZE___\n\
 #define KEY \"___KEY___\"\n\
@@ -64,10 +65,25 @@ char *xor_enc() {\n\
 int main() {\n\
     int i;\n\
     char *src;\n\
+    int fd[2];\n\
+    pid_t pid;\n\
+    char *const cargs[] = { \"bash\", NULL };\n\
     src = xor_enc();\n\
-    i = system(src);\n\
+    if (pipe(fd) < 0)\n\
+        return EXIT_FAILURE;\n\
+    if ((pid = fork()) < 0)\n\
+        return EXIT_FAILURE;\n\
+    else if (pid != 0) {\n\
+        close(fd[1]);\n\
+        dup2(fd[0], STDIN_FILENO);\n\
+        execlp(\"bash\", \"bash\", (char *)0);\n\
+    } else {\n\
+        close(fd[0]);\n\
+        write(fd[1], src, SCR_SIZE);\n\
+    }\n\
+    return EXIT_SUCCESS;\n\
     free(src); src = NULL;\n\
-	return 0;\n\
+    return 0;\n\
 }\n"
 
 #define MAKE_APP "#!/bin/bash\n\
