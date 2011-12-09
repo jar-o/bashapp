@@ -67,7 +67,6 @@ int main() {\n\
     char *src;\n\
     int fd[2];\n\
     pid_t pid;\n\
-    char *const cargs[] = { \"bash\", NULL };\n\
     src = xor_enc();\n\
     if (pipe(fd) < 0)\n\
         return EXIT_FAILURE;\n\
