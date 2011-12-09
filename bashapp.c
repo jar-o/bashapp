@@ -27,7 +27,7 @@ SOFTWARE.
 
 int main(int argc, char *argv[]) {
 
-    int i = 0, j;
+    int i = 0, key_len = DEFAULT_KEY_LEN;
     char *sz = NULL;
     char *script = NULL;
     char *script_e = NULL;
@@ -42,13 +42,15 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    if (argc == 3) { // Use default key
-        key = DEFAULT_KEY;
+    if (argc == 3) { // Use default key, recommended
+        key = rand_array(32, 254, key_len);
     }
     else { // User specifies key
-        key = calloc(strlen(argv[3])+1, sizeof(char));
+        key = calloc(strlen(argv[3])+1, sizeof(char)); 
         strncpy(key, argv[3], strlen(argv[3]));
+        key_len = strlen(argv[3])+1;
     }
+
 
     // Load up the script file
     i = load_script(argv[1], &script);
@@ -57,19 +59,26 @@ int main(int argc, char *argv[]) {
     sz = calloc( 10, sizeof(char) );
     sprintf(sz, "%d", i);
     
-    // Encrypt the script with the default key
-    script_e = xor_enc(script, i+1, key);
+
+    // Encrypt the script with the given key
+    script_e = xor_enc(script, i+1, key, key_len-1);
     tmp = src_hex_array(script_e, i);
+
 
     // Create code from template
     tmp2 = replace(C_TEMPLATE, "___BASH_SCR___", tmp);
     cats(&tmp, NULL);
 
-    tmp = replace(tmp2, "___KEY___", key);
+    tmp = replace(tmp2, "___KEY___", src_hex_array(key, key_len) );
     cats(&tmp2, NULL);
 
-    src = replace(tmp, "___BASH_SCR_SIZE___", sz);
+    tmp2 = replace(tmp, "___BASH_SCR_SIZE___", sz);
     cats(&tmp, NULL);
+
+    sprintf(sz, "%d", key_len);
+    src = replace(tmp2, "___KEY_LEN___", sz);
+    cats(&tmp2, NULL);
+
 
     // Write the .c source file
     cats(&tmp, argv[2]);
@@ -77,10 +86,9 @@ int main(int argc, char *argv[]) {
     write_file(tmp, src);
     cats(&tmp, NULL);
     
-    // Create our 'make' batch script
+    // Create and run our 'make' batch script
     tmp=replace(MAKE_APP, "___APPNAME___", argv[2]);
     i = system(tmp);
-//    printf("%s\n%s", src,tmp);
 
     return 0;
 }

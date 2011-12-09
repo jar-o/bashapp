@@ -31,29 +31,29 @@ SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
+#define DEFAULT_KEY_LEN 32
+
 #define USAGE "\n\
 Usage: bashapp PATH_TO_BASH_SCRIPT APPNAME [KEY]\n\
 \n\
 E.g.\n\n\
-  Create 'MyApp' with the default encryption key:\n\
+  Create 'MyApp' with the default encryption key (recommended):\n\
   bashapp script.sh MyApp\n\
 \n\
   Create 'MyApp' with your own key:\n\
   bashapp script.sh MyApp s#ZcrE33t\n\n"
-
-#define DEFAULT_KEY "d6a553a0008e6631f628a049f589f73e"
 
 #define C_TEMPLATE "#include <stdio.h>\n\
 #include <stdlib.h>\n\
 #include <unistd.h>\n\
 #include <string.h>\n\
 #define SCR_SIZE ___BASH_SCR_SIZE___\n\
-#define KEY \"___KEY___\"\n\
+#define KEY_LEN ___KEY_LEN___\n\
+unsigned char key[KEY_LEN] = ___KEY___\n\
 unsigned char script[SCR_SIZE] = ___BASH_SCR___\n\
 char *xor_enc() {\n\
     int i, j = 0;\n\
-    int k_len = strlen(KEY);\n\
-    char *key = KEY;\n\
+    int k_len = KEY_LEN - 1;\n\
     char *ret = calloc(SCR_SIZE+1, sizeof(char));\n\
     for (i = 0; i < SCR_SIZE; i++) {\n\
         ret[i] = script[i] ^ key[j];\n\
@@ -166,22 +166,21 @@ void cats(char **str, const char *str2) {
 /*
 Convert char value to HEX
 */
-char *atoh(char val) {
-    char *ret = calloc(5, sizeof(char));
-    int v = (int)val;
+char *atoh(unsigned char val) {
 
-    v = snprintf(ret, 5, "0x%x", v);
+    char *ret = calloc(5, sizeof(char));
+    snprintf(ret, 5, "0x%x", (unsigned int)val);
     return ret;
+
 } // aoth()
 
 
 /*
 XOR encrypt an array of chars, returns encrypted/decrypted array
 */
-char *xor_enc(char *src, int src_sz, char *key) {
+char *xor_enc(char *src, int src_sz, char *key, int k_len) {
 
     int i, j = 0;
-    int k_len = strlen(key);
     char *ret = calloc(src_sz+1, sizeof(char));
 
     for (i = 0; i < src_sz; i++) {
@@ -192,6 +191,7 @@ char *xor_enc(char *src, int src_sz, char *key) {
     return ret;
     
 } // xor_enc()
+
 
 /*
 This loads the script pointed to by path into a char array
@@ -225,6 +225,7 @@ int load_script(const char *path, char **out) {
 
 } // load_script()
 
+
 int write_file(const char *path, const char *src) {
 
     FILE *fp;
@@ -242,6 +243,9 @@ int write_file(const char *path, const char *src) {
 
 } // write_file
 
+/*
+Create a C99 hex-based array as a source string.
+*/
 char *src_hex_array(const char *array, int len) {
     char *ret = "{";
     char *tmp = NULL; 
@@ -265,33 +269,25 @@ char *src_hex_array(const char *array, int len) {
 
 } // src_hex_array()
 
-/*
-Generate a random string of alpha characters
-*/
-char *rand_alpha_str(int min, int max) {
 
-    int len;
-    int i, c;
+/*
+Generate a random array of characters
+*/
+char *rand_array(int char_min, int char_max, int len) {
+
     char *ret;
+    unsigned int i, c;
 
     srand( time(NULL) );
-    len = rand() % max ; // max length
-    len = len < min ? min : len; // assure minimum length
-    ret = calloc(len+1, sizeof(char));
+    ret = malloc( len + 1 );
 
-    for (i=0; i < len; i++) {
-        if (i%2 == 0) {
-            c=rand() % (90 - 65 + 1) + 65;
-        }
-        else {
-            c=rand() % (122 - 97 + 1) + 97;
-        }
-        ret[i] = (char)c;
-    } // for
-//    printf("len=%d, %s\n", len, ret);
+    for (i = 0; i < len; i++) {
+        c = (unsigned int)rand() % ( (char_max - char_min) + 1) + char_min; 
+        ret[i] = c;
+    }
+
     return ret;
 
-} // rand_alpha_str()
-
+}
 
 #endif // BASHAPP_HEADER_INCLUDED
