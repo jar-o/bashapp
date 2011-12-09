@@ -53,7 +53,7 @@ unsigned char script[SCR_SIZE] = ___BASH_SCR___\n\
 char *xor_enc() {\n\
     int i, j = 0;\n\
     int k_len = strlen(KEY);\n\
-	char *key = KEY;\n\
+    char *key = KEY;\n\
     char *ret = calloc(SCR_SIZE+1, sizeof(char));\n\
     for (i = 0; i < SCR_SIZE; i++) {\n\
         ret[i] = script[i] ^ key[j];\n\
@@ -197,11 +197,11 @@ char *xor_enc(char *src, int src_sz, char *key) {
 This loads the script pointed to by path into a char array
 */
 int load_script(const char *path, char **out) {
-	
+    
     FILE *fp = fopen(path, "r");
-	int i, j, sz;
-	struct stat fi;
-	char *tmp = NULL;
+    int i, j, sz;
+    struct stat fi;
+    char *tmp = NULL;
 
     if ( fp == NULL ) {
         perror("Error");
@@ -210,58 +210,58 @@ int load_script(const char *path, char **out) {
 
     // Get file info, i.e. size, and allocate memory
     stat(path, &fi);
-	sz = (int)fi.st_size;
-	tmp = calloc( sz+1, sizeof(char) );
+    sz = (int)fi.st_size;
+    tmp = calloc( sz+1, sizeof(char) );
 
-	i = 0;
-	while ( (j = getc(fp)) != EOF ) {
-		tmp[i] = (char)j;
-		i++;
-	}
-	fclose(fp);
-	
-	*out = tmp;
-	return sz;
+    i = 0;
+    while ( (j = getc(fp)) != EOF ) {
+        tmp[i] = (char)j;
+        i++;
+    }
+    fclose(fp);
+    
+    *out = tmp;
+    return sz;
 
 } // load_script()
 
 int write_file(const char *path, const char *src) {
 
-	FILE *fp;
-	fp = fopen(path, "w");	
+    FILE *fp;
+    fp = fopen(path, "w");    
 
     if ( fp == NULL ) {
         perror("Error");
         return EXIT_FAILURE;
     }
 
-	fprintf(fp, "%s", src);
-	fclose(fp);
+    fprintf(fp, "%s", src);
+    fclose(fp);
 
-	return 1;
+    return 1;
 
 } // write_file
 
 char *src_hex_array(const char *array, int len) {
-	char *ret = "{";
-	char *tmp = NULL; 
-	char cv;
-	int i;
-	
-	tmp = calloc(5,sizeof(char)); // e.g. "0xff";
-	for(i=0; i<len; i++) { 
-		snprintf(tmp, 5, "%s", atoh(array[i]));
-		cats(&ret, tmp);
-		if (i+1 == len) {
-			cats(&ret, "};");
-		}
-		else {
-			cats(&ret, ",");
-		}
-	}
+    char *ret = "{";
+    char *tmp = NULL; 
+    char cv;
+    int i;
+    
+    tmp = calloc(5,sizeof(char)); // e.g. "0xff";
+    for(i=0; i<len; i++) { 
+        snprintf(tmp, 5, "%s", atoh(array[i]));
+        cats(&ret, tmp);
+        if (i+1 == len) {
+            cats(&ret, "};");
+        }
+        else {
+            cats(&ret, ",");
+        }
+    }
 
-	cats(&tmp, NULL);
-	return ret;
+    cats(&tmp, NULL);
+    return ret;
 
 } // src_hex_array()
 
@@ -270,26 +270,26 @@ Generate a random string of alpha characters
 */
 char *rand_alpha_str(int min, int max) {
 
-	int len;
-	int i, c;
-	char *ret;
+    int len;
+    int i, c;
+    char *ret;
 
-	srand( time(NULL) );
-	len = rand() % max ; // max length
-	len = len < min ? min : len; // assure minimum length
-	ret = calloc(len+1, sizeof(char));
+    srand( time(NULL) );
+    len = rand() % max ; // max length
+    len = len < min ? min : len; // assure minimum length
+    ret = calloc(len+1, sizeof(char));
 
-	for (i=0; i < len; i++) {
-		if (i%2 == 0) {
-			c=rand() % (90 - 65 + 1) + 65;
-		}
-		else {
-			c=rand() % (122 - 97 + 1) + 97;
-		}
-		ret[i] = (char)c;
-	} // for
-//	printf("len=%d, %s\n", len, ret);
-	return ret;
+    for (i=0; i < len; i++) {
+        if (i%2 == 0) {
+            c=rand() % (90 - 65 + 1) + 65;
+        }
+        else {
+            c=rand() % (122 - 97 + 1) + 97;
+        }
+        ret[i] = (char)c;
+    } // for
+//    printf("len=%d, %s\n", len, ret);
+    return ret;
 
 } // rand_alpha_str()
 
