@@ -7,6 +7,9 @@ bash scripts without terminals popping up, etc. Useful for launch, service scrip
 etc.
 
 It also provides simple source encryption as a means to obfuscate the bash script.
+You can specify your own key, or let bashapp generate a 32 byte random key for you.
+(Note: it's recommended to use the default key, since every time you compile, it will
+create a new, pseudo-randomly generated value.)
 
 
 Compiling
