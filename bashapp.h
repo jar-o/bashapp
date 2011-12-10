@@ -249,12 +249,14 @@ Create a C99 hex-based array as a source string.
 char *src_hex_array(const char *array, int len) {
     char *ret = "{";
     char *tmp = NULL; 
+    char *tmp2 = NULL;
     char cv;
     int i;
     
     tmp = calloc(5,sizeof(char)); // e.g. "0xff";
     for(i=0; i<len; i++) { 
-        snprintf(tmp, 5, "%s", atoh(array[i]));
+        tmp2 = atoh(array[i]);
+        snprintf(tmp, 5, "%s", tmp2);
         cats(&ret, tmp);
         if (i+1 == len) {
             cats(&ret, "};");
@@ -262,8 +264,10 @@ char *src_hex_array(const char *array, int len) {
         else {
             cats(&ret, ",");
         }
+        free(tmp2);
     }
 
+    // Free tmp
     cats(&tmp, NULL);
     return ret;
 
