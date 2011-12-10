@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     char *script = NULL;
     char *script_e = NULL;
     char *src = NULL;
-    char *tmp = NULL, *tmp2 = NULL;
+    char *tmp = NULL, *tmp2 = NULL, *tmp3 = NULL;
     char *key = NULL;
 
 
@@ -69,8 +69,10 @@ int main(int argc, char *argv[]) {
     tmp2 = replace(C_TEMPLATE, "___BASH_SCR___", tmp);
     cats(&tmp, NULL);
 
-    tmp = replace(tmp2, "___KEY___", src_hex_array(key, key_len) );
+    tmp3 = src_hex_array(key, key_len);
+    tmp = replace(tmp2, "___KEY___", tmp3);
     cats(&tmp2, NULL);
+    cats(&tmp3, NULL);
 
     tmp2 = replace(tmp, "___BASH_SCR_SIZE___", sz);
     cats(&tmp, NULL);
@@ -87,7 +89,7 @@ int main(int argc, char *argv[]) {
     cats(&tmp, NULL);
     
     // Create and run our 'make' batch script
-    tmp=replace(MAKE_APP, "___APPNAME___", argv[2]);
+    tmp = replace(MAKE_APP, "___APPNAME___", argv[2]);
     i = system(tmp);
 
     return 0;
