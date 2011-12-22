@@ -27,7 +27,7 @@ SOFTWARE.
 
 int main(int argc, char *argv[]) {
 
-    int i = 0, key_len = DEFAULT_KEY_LEN;
+    int i = 0, key_len;
     char *sz = NULL;
     char *script = NULL;
     char *script_e = NULL;
@@ -42,7 +42,10 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    if (argc == 3) { // Use default key, recommended
+    if (argc == 3) { // Use default key, recommended, since it's random + variable length
+        srand( time(NULL) );
+        key_len = (unsigned int)rand() % 
+            ( ( (DEFAULT_KEY_LEN * 3) - DEFAULT_KEY_LEN ) + 1 ) + DEFAULT_KEY_LEN;
         key = rand_array(32, 254, key_len);
     }
     else { // User specifies key
