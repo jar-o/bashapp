@@ -23,7 +23,7 @@ gcc bashapp.c -o bashapp
 
 Using bashapp
 
-Usage: bashapp PATH_TO_BASH_SCRIPT APPNAME [KEY]
+Usage: bashapp -k <key> -i <icon> PATH_TO_BASH_SCRIPT APPNAME
 
 E.g.
 
@@ -31,4 +31,7 @@ E.g.
   bashapp script.sh MyApp
 
   Create 'MyApp' with your own key:
-  bashapp script.sh MyApp s#ZcrE33t
+  bashapp -i s#ZcrE33t script.sh MyApp
+
+  Create 'MyApp' with your own icon:
+  bashapp -i someicon.icns script.sh MyApp

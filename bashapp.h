@@ -30,18 +30,22 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define DEFAULT_KEY_LEN 32
 
 #define USAGE "\n\
-Usage: bashapp PATH_TO_BASH_SCRIPT APPNAME [KEY]\n\
+Usage: bashapp -k <keyfile> -i <icon> PATH_TO_BASH_SCRIPT APPNAME\n\
 \n\
 E.g.\n\n\
   Create 'MyApp' with the default encryption key (recommended):\n\
   bashapp script.sh MyApp\n\
 \n\
   Create 'MyApp' with your own key:\n\
-  bashapp script.sh MyApp s#ZcrE33t\n\n"
+  bashapp -k s#ZcrE33t script.sh MyApp\n\
+\n\
+  Create 'MyApp' with your own icon:\n\
+  bashapp -i myicon.icns script.sh MyApp\n\n"
 
 #define C_TEMPLATE "#include <stdio.h>\n\
 #include <stdlib.h>\n\
@@ -55,6 +59,7 @@ char *xor_enc() {\n\
     int i, j = 0;\n\
     int k_len = KEY_LEN - 1;\n\
     char *ret = calloc(SCR_SIZE+1, sizeof(char));\n\
+    if (ret == NULL) exit(EXIT_FAILURE);\n\
     for (i = 0; i < SCR_SIZE; i++) {\n\
         ret[i] = script[i] ^ key[j];\n\
         j++;\n\
@@ -90,6 +95,20 @@ mkdir -p ___APPNAME___.app/Contents/MacOS/\n\
 gcc ___APPNAME___.c -o ___APPNAME___.app/Contents/MacOS/___APPNAME___\n\
 chmod a+x ___APPNAME___.app/Contents/MacOS/___APPNAME___\n"
 
+#define MAKE_ICON "#!/bin/bash\n\
+echo \"\
+<\?xml version=\"1.0\" encoding=\"UTF-8\"\?>\n\
+<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n\
+<plist version=\"1.0\">\n\
+<dict>\n\
+    <key>CFBundleExecutable</key>\n\
+    <string>___APPNAME___</string>\n\
+    <key>CFBundleIconFile</key>\n\
+    <string>___ICONFILE___</string>\n\
+</dict>\n\
+</plist>\" > ___APPNAME___.app/Contents/Info.plist\n\
+mkdir -p ___APPNAME___.app/Contents/Resources/\n\
+cp ___ICONFILE___ ___APPNAME___.app/Contents/Resources/ >&0\n"
 
 char *replace(const char *s, const char *olds, const char *news)
 {
@@ -106,8 +125,9 @@ char *replace(const char *s, const char *olds, const char *news)
     }
 
     ret = malloc(i + 1 + count * (newlen - oldlen));
-
-    if (ret == NULL) exit(EXIT_FAILURE);
+	if (ret == NULL) {
+		return NULL;
+	}
 
     i = 0;
     while (*s) {
@@ -135,31 +155,37 @@ char *replace(const char *s, const char *olds, const char *news)
         // ... use 'a' somewhere
         cats(&a, NULL); // free 'a'
 */
-void cats(char **str, const char *str2) {
+int cats(char **str, const char *str2) {
     char *tmp = NULL;
+	int old_len = 0;
 
     // Reset *str
     if ( *str != NULL && str2 == NULL ) {
         free(*str);
         *str = NULL;
-        return;
+        return 0;
     }
+
+	if ( *str == NULL && str2 == NULL ) {
+		return 0;
+	}
 
     // Initial copy
     if (*str == NULL) {
         *str = calloc( strlen(str2)+1, sizeof(char) );
+		if (*str == NULL) {
+			return -1;
+		}
         memcpy( *str, str2, strlen(str2) );
     }
     else { // Append
-        tmp = calloc( strlen(*str)+1, sizeof(char) );
-        memcpy( tmp, *str, strlen(*str) );
-        //free(*str); // why u no worky?
-        *str = calloc( strlen(*str)+strlen(str2)+1, sizeof(char) );
-        memcpy( *str, tmp, strlen(tmp) );
+		old_len = strlen(*str);
+		*str = realloc( *str, strlen(*str)+strlen(str2)+1 );
+		memset( *str+old_len, 0, strlen(str2)+1 );	
         memcpy( *str + strlen(*str), str2, strlen(str2) );
-        free(tmp);
     }
 
+	return 0;
 } // cats()
 
 
@@ -169,6 +195,9 @@ Convert char value to HEX
 char *atoh(unsigned char val) {
 
     char *ret = calloc(5, sizeof(char));
+	if (ret == NULL) {
+		return NULL;
+	}
     snprintf(ret, 5, "0x%x", (unsigned int)val);
     return ret;
 
@@ -182,6 +211,9 @@ char *xor_enc(char *src, int src_sz, char *key, int k_len) {
 
     int i, j = 0;
     char *ret = calloc(src_sz+1, sizeof(char));
+    if (ret == NULL) {
+		return NULL;
+	}
 
     for (i = 0; i < src_sz; i++) {
         ret[i] = src[i] ^ key[j];
@@ -204,14 +236,16 @@ int load_script(const char *path, char **out) {
     char *tmp = NULL;
 
     if ( fp == NULL ) {
-        perror("Error");
-        return EXIT_FAILURE;
-    }
+		return -1;
+	}
 
     // Get file info, i.e. size, and allocate memory
     stat(path, &fi);
     sz = (int)fi.st_size;
     tmp = calloc( sz+1, sizeof(char) );
+	if (tmp == NULL) {
+		return -1;
+	}
 
     i = 0;
     while ( (j = getc(fp)) != EOF ) {
@@ -247,30 +281,37 @@ int write_file(const char *path, const char *src) {
 Create a C99 hex-based array as a source string.
 */
 char *src_hex_array(const char *array, int len) {
-    char *ret = "{";
-    char *tmp = NULL; 
+    char *ret = NULL;
     char *tmp2 = NULL;
     char cv;
     int i;
     
-    tmp = calloc(5,sizeof(char)); // e.g. "0xff";
+	if (cats(&ret, "{") == -1) {
+		return NULL;
+	}
+
     for(i=0; i<len; i++) { 
         tmp2 = atoh(array[i]);
-        snprintf(tmp, 5, "%s", tmp2);
-        cats(&ret, tmp);
+		if (tmp2 == NULL) {
+			return NULL;
+		}
+        if (cats(&ret, tmp2) == -1) {
+			return NULL;
+		}
         if (i+1 == len) {
-            cats(&ret, "};");
+            if (cats(&ret, "};") == -1) {
+				return NULL;
+			}
         }
         else {
-            cats(&ret, ",");
+            if (cats(&ret, ",") == -1) {
+				return NULL;
+			}
         }
-        free(tmp2);
+		cats(&tmp2, NULL);
     }
 
-    // Free tmp
-    cats(&tmp, NULL);
     return ret;
-
 } // src_hex_array()
 
 
